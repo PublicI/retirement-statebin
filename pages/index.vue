@@ -1,9 +1,16 @@
 <template>
     <no-ssr>
-        <div class="statebins">
-            <div :style="'top:' + bin.y + 'px;left:' + bin.x + 'px;background-color:' + bin.color" class="statebin" v-for="bin in bins" v-tooltip="{ content: '<b>' + bin.name + '</b><br>' + bin.percent + ' percent<br>' + bin.number + ' workers' }">
-                {{bin.abbrev}}
+        <div class="statebinContainer">
+            <svg>
+            </svg>
+
+            <div class="statebins">
+                <div :style="'top:' + bin.y + 'px;left:' + bin.x + 'px;background-color:' + bin.color" class="statebin" v-for="bin in bins" v-tooltip="{ content: '<b>' + bin.name + '</b><br>' + bin.percent + ' percent<br>' + bin.number + ' workers' }">
+                    {{bin.abbrev}}
+                </div>
             </div>
+
+            <p class="source">Source: AARP analysis of U.S. Census Bureau data</p>
         </div>
     </no-ssr>
 </template>
@@ -11,8 +18,8 @@
 <script>
 import stats from '~/assets/stats.csv';
 import { intword, intcomma, postal } from 'journalize';
-import { interpolateYlOrBr } from 'd3-scale-chromatic';
-import { scaleLinear } from 'd3-scale';
+import * as d3 from 'd3';
+import { legendColor } from 'd3-svg-legend';
 
 export default {
     data() {
@@ -27,6 +34,26 @@ export default {
                 '             OK LA MS AL GA',
                 '    HI AK    TX             FL']
         };
+    },
+    mounted() {
+        let svg = d3.select('.statebinContainer svg');
+
+        svg.append('g')
+            .attr('class', 'legendLinear')
+            .attr('transform', 'translate(20,20)');
+
+        let scale = d3.scaleLinear()
+            .domain([30, 70])
+            .range([0, 1]);
+
+        let legendLinear = legendColor()
+            .shapeWidth(30)
+            .cells([30, 40, 50, 60, 70])
+            .orient('horizontal')
+            .scale(scale);
+
+        svg.select('.legendLinear')
+            .call(legendLinear);
     },
     computed: {
         bins() {
@@ -43,11 +70,11 @@ export default {
             }
             */
 
-            let scale = scaleLinear()
+            let re = /\w+/g;
+
+            let scale = d3.scaleLinear()
                 .domain([30, 70])
                 .range([0, 1]);
-
-            let re = /\w+/g;
 
             this.grid.forEach(function(line, i) {
                 let m;
@@ -73,7 +100,7 @@ export default {
                 if (abbrev in binsRef) {
                     let count = parseInt(d.number);
 
-                    binsRef[abbrev].color = interpolateYlOrBr(scale(parseInt(d.percent)));
+                    binsRef[abbrev].color = d3.interpolateYlOrBr(scale(parseInt(d.percent)));
                     binsRef[abbrev].name = d.state;
                     binsRef[abbrev].percent = parseInt(d.percent);
                     binsRef[abbrev].number = count >= 1000000 ? intword(count) : intcomma(count);
@@ -90,7 +117,7 @@ export default {
 .statebins {
     position: relative;
     width: 300px;
-    height: 200px;
+    height: 220px;
     /* margin-top: -19px; */
 }
 
@@ -213,5 +240,11 @@ export default {
     visibility: visible;
     opacity: 1;
     transition: opacity .15s;
+}
+.source {
+    font-size: 14px;
+    line-height: 16px;
+    color: #666;
+    margin-bottom: 15px;
 }
 </style>
