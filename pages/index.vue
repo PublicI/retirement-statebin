@@ -6,7 +6,7 @@
         </svg>
 
         <div class="statebins">
-            <div :style="'top:' + bin.y + 'px;left:' + bin.x + 'px;background-color:' + bin.color" class="statebin" v-for="bin in bins" v-tooltip="{ content: '<b>' + bin.name + '</b><br>' + (bin.percent*100) + ' percent<br>' + bin.number + ' workers' }">
+            <div :style="'top:' + bin.y + 'px;left:' + bin.x + 'px;background-color:' + bin.color" class="statebin" v-for="bin in bins" v-tooltip="{ content: '<b>' + bin.name + '</b><br>' + Math.round(bin.percent*100) + ' percent<br>' + bin.number + ' workers' }">
                 {{bin.abbrev}}
             </div>
         </div>
