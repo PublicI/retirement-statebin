@@ -1,18 +1,18 @@
 <template>
-    <no-ssr>
-        <div class="statebinContainer">
-            <svg>
-            </svg>
+    <div class="statebinContainer">
+        <svg style="width:100%;height:60px">
+            <g class="legendLinear" transform="translate(20,20)">
+            </g>
+        </svg>
 
-            <div class="statebins">
-                <div :style="'top:' + bin.y + 'px;left:' + bin.x + 'px;background-color:' + bin.color" class="statebin" v-for="bin in bins" v-tooltip="{ content: '<b>' + bin.name + '</b><br>' + bin.percent + ' percent<br>' + bin.number + ' workers' }">
-                    {{bin.abbrev}}
-                </div>
+        <div class="statebins">
+            <div :style="'top:' + bin.y + 'px;left:' + bin.x + 'px;background-color:' + bin.color" class="statebin" v-for="bin in bins" v-tooltip="{ content: '<b>' + bin.name + '</b><br>' + (bin.percent*100) + ' percent<br>' + bin.number + ' workers' }">
+                {{bin.abbrev}}
             </div>
-
-            <p class="source">Source: AARP analysis of U.S. Census Bureau data</p>
         </div>
-    </no-ssr>
+
+        <p class="source">Source: AARP analysis of U.S. Census Bureau data</p>
+    </div>
 </template>
 
 <script>
@@ -24,65 +24,62 @@ import { legendColor } from 'd3-svg-legend';
 export default {
     data() {
         return {
-            stats,
-            grid: ['                                  ME',
+            stats: stats.map(({ state, percent, number }) => {
+                return {
+                    state,
+                    percent: +percent/100,
+                    number: +number
+                };
+            }),
+            grid: [
+                '                                  ME',
                 '                   WI          VT NH',
                 '    WA ID MT ND MN IL MI    NY MA',
                 '    OR NV WY SD IA IN OH PA NJ CT RI',
                 '    CA UT CO NE MO KY WV VA MD DE',
                 '       AZ NM KS AR TN NC SC',
                 '             OK LA MS AL GA',
-                '    HI AK    TX             FL']
+                '    HI AK    TX             FL'
+            ]
         };
     },
     mounted() {
-        let svg = d3.select('.statebinContainer svg');
+        this.$nextTick(() => {
+            let legendLinear = legendColor()
+                .shapeWidth(30)
+                .cells([0.3, 0.4, 0.5, 0.6, 0.7])
+                .orient('horizontal')
+                .labelFormat('.0%')
+                .scale(this.scale());
 
-        svg.append('g')
-            .attr('class', 'legendLinear')
-            .attr('transform', 'translate(20,20)');
-
-        let scale = d3.scaleLinear()
-            .domain([30, 70])
-            .range([0, 1]);
-
-        let legendLinear = legendColor()
-            .shapeWidth(30)
-            .cells([30, 40, 50, 60, 70])
-            .orient('horizontal')
-            .scale(scale);
-
-        svg.select('.legendLinear')
-            .call(legendLinear);
+            d3.select('.legendLinear').call(legendLinear);
+        });
+    },
+    methods: {
+        scale() {
+            return d3
+                .scaleSequential(d3.interpolateYlOrBr)
+                .domain([0.3, 0.7]);
+        }
     },
     computed: {
         bins() {
+            let scale = this.scale();
+
             let binsRef = {};
             let bins = [];
 
-            // let w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-
             let boxSize = 26;
-
-            /*
-            if (w > 500 && w <= 541) {
-                boxSize = 22;
-            }
-            */
 
             let re = /\w+/g;
 
-            let scale = d3.scaleLinear()
-                .domain([30, 70])
-                .range([0, 1]);
-
             this.grid.forEach(function(line, i) {
                 let m;
-                while (m = re.exec(line)) { // eslint-disable-line no-cond-assign
+                while ((m = re.exec(line))) { // eslint-disable-line no-cond-assign
                     let state = {
                         abbrev: m[0],
-                        x: (m.index / 3)*boxSize-(boxSize+2),
-                        y: i*boxSize,
+                        x: m.index / 3 * boxSize - (boxSize + 2),
+                        y: i * boxSize,
                         color: null,
                         name: null,
                         percent: null,
@@ -95,15 +92,16 @@ export default {
                 }
             });
 
-            this.stats.forEach(function (d) {
+            this.stats.forEach(function(d) {
                 let abbrev = postal(d.state);
                 if (abbrev in binsRef) {
-                    let count = parseInt(d.number);
-
-                    binsRef[abbrev].color = d3.interpolateYlOrBr(scale(parseInt(d.percent)));
+                    binsRef[abbrev].color = scale(d.percent);
                     binsRef[abbrev].name = d.state;
-                    binsRef[abbrev].percent = parseInt(d.percent);
-                    binsRef[abbrev].number = count >= 1000000 ? intword(count) : intcomma(count);
+                    binsRef[abbrev].percent = d.percent;
+                    binsRef[abbrev].number =
+                        d.number >= 1000000
+                            ? intword(d.number)
+                            : intcomma(d.number);
                 }
             });
 
@@ -118,7 +116,7 @@ export default {
     position: relative;
     width: 300px;
     height: 220px;
-    /* margin-top: -19px; */
+    margin-top: -19px;
 }
 
 .statebin {
@@ -246,5 +244,11 @@ export default {
     line-height: 16px;
     color: #666;
     margin-bottom: 15px;
+}
+
+.legendLinear .label {
+    font-family: tablet-gothic-n2,tablet-gothic,Helvetica Neue,Helvetica,Arial,sans-serif;
+    font-size: 13px;
+    line-height: 16px;
 }
 </style>
