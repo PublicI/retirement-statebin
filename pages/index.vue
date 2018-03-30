@@ -250,5 +250,6 @@ export default {
     font-family: tablet-gothic-n2,tablet-gothic,Helvetica Neue,Helvetica,Arial,sans-serif;
     font-size: 13px;
     line-height: 16px;
+    fill: rgb(100,100,100);
 }
 </style>
