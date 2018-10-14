@@ -1,7 +1,7 @@
 # retirement-statebin
 
-> Graphic for [The investment industry threatens state retirement plans to help workers save
-](https://www.publicintegrity.org/2018/04/02/21643/investment-industry-threatens-state-retirement-plans-help-workers-save)
+> Graphic for "[The investment industry threatens state retirement plans to help workers save
+](https://www.publicintegrity.org/2018/04/02/21643/investment-industry-threatens-state-retirement-plans-help-workers-save)"
 
 ## Build setup
 
